@@ -1,0 +1,62 @@
+/* Shared look for the login + settings pages (the dashboard has its own inline styles). */
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --text: #1d2330; --muted: #6b7280; --border: #e3e6eb;
+  --mt: #2f9e62; --mc: #7c4dd8; --tg: #229ed9; --ok: #2f9e62; --bad: #d64545; --accent: #2563eb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151b; --panel: #1b1f27; --text: #e6e8ec; --muted: #9aa3b2; --border: #2a303b;
+    --mt: #4cc584; --mc: #a585f0; --tg: #4bb6ea; --ok: #4cc584; --bad: #ef6b6b; --accent: #5b8cff;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+header.top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel);
+             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+header.top h1 { font-size: 16px; margin: 0; }
+header.top .spacer { flex: 1; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 6px; margin-bottom: 18px; }
+.card h2 { font-size: 15px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.card h2 .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.card > p.desc { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.field { margin-bottom: 14px; }
+.field > label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.field .help { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+input[type=text], input[type=password], input[type=number], select {
+  width: 100%; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.inline { display: flex; gap: 8px; }
+.inline > input, .inline > select { flex: 1; min-width: 0; }
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg label { padding: 6px 14px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.seg input { display: none; }
+.seg input:checked + span { color: var(--text); font-weight: 600; }
+.seg label:has(input:checked) { background: var(--bg); }
+button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+         background: var(--bg); color: var(--text); cursor: pointer; white-space: nowrap; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .55; cursor: default; }
+.muted { color: var(--muted); }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+.note { font-size: 13px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); margin-bottom: 14px; }
+.note.bad { border-color: var(--bad); }
+.note.ok { border-color: var(--ok); }
+.disabled-group { opacity: .5; pointer-events: none; }
+table.seen { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 14px; }
+table.seen td, table.seen th { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+table.seen th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.savebar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--border);
+           padding: 10px 16px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+.savebar .msg { font-size: 13px; }
+.center-box { max-width: 380px; margin: 10vh auto 0; padding: 0 16px; }
+.center-box .card { padding: 22px; }
+.center-box h1 { font-size: 20px; margin: 0 0 6px; }
+code { font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); }

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesh Bridge</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --text: #1d2330; --muted: #6b7280; --border: #e3e6eb;
+    --mt: #2f9e62; --mc: #7c4dd8; --ok: #2f9e62; --bad: #d64545; --accent: #2563eb;
+    --bubble-in: #f0f2f5; --bubble-out: #e5efff; --dm: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1b1f27; --text: #e6e8ec; --muted: #9aa3b2; --border: #2a303b;
+      --mt: #4cc584; --mc: #a585f0; --ok: #4cc584; --bad: #ef6b6b; --accent: #5b8cff;
+      --bubble-in: #232833; --bubble-out: #1f2d4a; --dm: #e0a84a;
+    }
+    .leaflet-tile-pane { filter: brightness(.75) contrast(1.1) saturate(.8); }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel);
+           border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+          border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--ok); }
+  .spacer { flex: 1; }
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr); min-height: 0; }
+  #map { min-height: 300px; }
+  aside { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-left: 1px solid var(--border); }
+  .tabs { display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+  .tabs button, .filters button { background: none; border: 1px solid transparent; color: var(--muted); padding: 5px 10px;
+          border-radius: 6px; cursor: pointer; font: inherit; }
+  .tabs button.active, .filters button.active { color: var(--text); border-color: var(--border); background: var(--bg); }
+  .filters { display: flex; gap: 2px; margin-left: auto; }
+  .filters button { font-size: 12px; padding: 3px 8px; }
+  #messages, #nodes { flex: 1; overflow-y: auto; padding: 12px; }
+  .msg { max-width: 88%; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: var(--bubble-in); }
+  .msg.out { margin-left: auto; background: var(--bubble-out); }
+  .msg .meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .msg .who { font-weight: 600; color: var(--text); }
+  .msg .body { white-space: pre-wrap; word-wrap: break-word; margin-top: 2px; }
+  .msg.failed { outline: 1px solid var(--bad); }
+  .msg .err { color: var(--bad); font-size: 11px; }
+  .msg .dlv { font-size: 11px; margin-top: 4px; color: var(--muted); }
+  .msg .dlv.delivered, .msg .dlv.repeated { color: var(--ok); }
+  .msg .dlv.relayed { color: var(--accent); }
+  .msg .dlv.failed { color: var(--bad); }
+  .msg .route { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .msg.clickable { cursor: pointer; }
+  .tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; color: #fff; }
+  .tag.mt { background: var(--mt); } .tag.mc { background: var(--mc); }
+  .tag.dm { background: var(--dm); }
+  .empty { color: var(--muted); text-align: center; margin-top: 40px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.num { font-variant-numeric: tabular-nums; }
+  tr.node { cursor: pointer; } tr.node:hover { background: var(--bg); }
+  form#send { border-top: 1px solid var(--border); padding: 10px 12px; display: grid; gap: 8px; }
+  .row { display: flex; gap: 8px; }
+  select, input[type=text], button.primary { font: inherit; padding: 7px 9px; border-radius: 7px;
+          border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  select { flex: 1; min-width: 0; }
+  input[type=text] { flex: 1; min-width: 0; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); cursor: pointer; padding: 7px 16px; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  .hint { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+  .hint .over { color: var(--bad); }
+  .hlink { color: var(--accent); text-decoration: none; font-size: 13px; }
+  [hidden] { display: none !important; }
+  #setup-hint { padding: 10px 16px; background: var(--bubble-out); border-bottom: 1px solid var(--border); }
+  #setup-hint a { color: var(--accent); }
+  .readonly-note { border-top: 1px solid var(--border); padding: 10px 12px; color: var(--muted); font-size: 13px; }
+  .readonly-note a { color: var(--accent); }
+  .leaflet-popup-content { font: 13px/1.4 system-ui, sans-serif; }
+  .leaflet-popup-content button { margin-top: 6px; font: inherit; padding: 4px 10px; border-radius: 6px;
+          border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  .legend { background: var(--panel); color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  .legend span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: -1px; }
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 40vh minmax(0, 1fr); }
+    aside { border-left: 0; border-top: 1px solid var(--border); }
+    header { padding: 8px 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">📡 Mesh Bridge</h1>
+  <span class="pill" id="mt-pill" hidden><span class="dot" id="mt-dot"></span><span id="mt-label">Meshtastic</span></span>
+  <span class="pill" id="mc-pill" hidden><span class="dot" id="mc-dot"></span><span id="mc-label">MeshCore</span></span>
+  <span class="pill" id="tg-pill" hidden><span class="dot" id="tg-dot"></span><span id="tg-label">Telegram</span></span>
+  <span class="pill"><span class="dot" id="ws-dot"></span>live</span>
+  <span class="spacer"></span>
+  <span class="pill" id="node-count">0 nodes</span>
+  <a class="hlink" id="settings-link" href="settings" hidden>⚙️ Settings</a>
+  <a class="hlink" id="login-link" href="login" hidden>Log in</a>
+</header>
+<div id="setup-hint" hidden>No radio is set up yet. Open <a href="settings">Settings</a> to connect a Meshtastic or MeshCore radio.</div>
+<main>
+  <div id="map"></div>
+  <aside>
+    <div class="tabs">
+      <button data-tab="messages" class="active">Messages</button>
+      <button data-tab="nodes">Nodes</button>
+      <div class="filters" id="filters">
+        <button data-f="all" class="active">All</button>
+        <button data-f="mt">Meshtastic</button>
+        <button data-f="mc">MeshCore</button>
+        <button data-f="dm">Private</button>
+      </div>
+    </div>
+    <div id="messages"></div>
+    <div id="nodes" hidden></div>
+    <form id="send" autocomplete="off">
+      <div class="row">
+        <select id="net">
+          <option value="mt">Meshtastic</option>
+          <option value="mc">MeshCore</option>
+          <option value="all">Both networks</option>
+        </select>
+        <select id="dest"></select>
+      </div>
+      <div class="row">
+        <input type="text" id="text" placeholder="Message…" maxlength="500">
+        <button class="primary" id="send-btn" type="submit">Send</button>
+      </div>
+      <div class="hint"><span id="sign-hint"></span><span id="count"></span></div>
+    </form>
+    <div class="readonly-note" id="readonly" hidden>Read-only view. <a href="login">Log in</a> to send messages and see private chats.</div>
+  </aside>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const NET = { mt: "Meshtastic", mc: "MeshCore" };
+let state = { mt: {}, mc: {}, nodes: [], sign: "", logged_in: false };
+let messages = [];
+let filter = "all";
+let fitted = false;
+const markers = {};
+
+// ── helpers ──────────────────────────────────────
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const bytes = s => new TextEncoder().encode(s).length;
+function ago(ts) {
+  if (!ts) return "—";
+  const s = Math.max(0, Date.now() / 1000 - ts);
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s / 60) + " min ago";
+  if (s < 86400) return Math.floor(s / 3600) + " h ago";
+  return Math.floor(s / 86400) + " d ago";
+}
+const clock = ts => new Date(ts * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const nodeKey = n => n.net + ":" + n.id;
+
+// ── map ──────────────────────────────────────────
+const map = L.map("map", { zoomControl: true }).setView([20, 0], 2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+const legend = L.control({ position: "bottomleft" });
+legend.onAdd = () => {
+  const d = L.DomUtil.create("div", "legend");
+  d.innerHTML = `<span style="background:${cssVar("--mt")}"></span>Meshtastic<span style="background:${cssVar("--mc")}"></span>MeshCore`;
+  return d;
+};
+legend.addTo(map);
+
+function popupHtml(n) {
+  const rows = [
+    ["Network", NET[n.net] + (n.self ? " (this bridge)" : "")],
+    ["Type", n.role || n.hw],
+    ["Hardware", n.role && n.hw ? n.hw : null],
+    ["Last heard", ago(n.last_heard)],
+    ["SNR", n.snr != null ? n.snr + " dB" : null],
+    ["Hops", n.hops],
+    ["Battery", n.battery != null ? (n.battery > 100 ? "USB powered" : n.battery + "%") : null],
+    ["Voltage", n.voltage != null ? (n.voltage > 100 ? (n.voltage / 1000).toFixed(2) : n.voltage.toFixed(2)) + " V" : null],
+    ["Altitude", n.alt != null ? n.alt + " m" : null],
+  ].filter(r => r[1] != null && r[1] !== "");
+  const btn = n.self || !state.logged_in ? "" : `<button onclick="pickTarget('${n.net}','${esc(n.id)}')">✉️ Private message</button>`;
+  return `<b>${esc(n.name)}</b> <small>${esc(n.short || n.id.slice(0, 8))}</small><br>` +
+    rows.map(r => `${r[0]}: <b>${esc(r[1])}</b>`).join("<br>") + "<br>" + btn;
+}
+
+function drawMap() {
+  const seen = new Set();
+  const pts = [];
+  for (const n of state.nodes) {
+    if (n.lat == null || n.lon == null) continue;
+    const k = nodeKey(n);
+    seen.add(k);
+    pts.push([n.lat, n.lon]);
+    const color = cssVar(n.net === "mt" ? "--mt" : "--mc");
+    const opts = { radius: n.self ? 10 : 7, color: n.self ? "#000" : color, weight: n.self ? 3 : 1,
+                   fillColor: color, fillOpacity: .85 };
+    if (markers[k]) {
+      markers[k].setLatLng([n.lat, n.lon]).setStyle(opts);
+      markers[k].setPopupContent(popupHtml(n));
+    } else {
+      markers[k] = L.circleMarker([n.lat, n.lon], opts).bindPopup(popupHtml(n))
+        .bindTooltip(n.name, { direction: "top", offset: [0, -6] }).addTo(map);
+    }
+  }
+  for (const k of Object.keys(markers)) if (!seen.has(k)) { map.removeLayer(markers[k]); delete markers[k]; }
+  if (!fitted && pts.length) {
+    fitted = true;
+    if (pts.length === 1) map.setView(pts[0], 12); else map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 });
+  }
+}
+
+// ── nodes tab ────────────────────────────────────
+function drawNodes() {
+  const list = state.nodes
+    .filter(n => filter === "all" || filter === "dm" || n.net === filter)
+    .sort((a, b) => (b.self - a.self) || ((b.last_heard || 0) - (a.last_heard || 0)));
+  const el = document.getElementById("nodes");
+  if (!list.length) { el.innerHTML = `<div class="empty">No nodes yet</div>`; return; }
+  el.innerHTML = `<table><thead><tr><th></th><th>Name</th><th>Type</th><th>Heard</th><th>SNR</th><th>Hops</th><th>📍</th></tr></thead><tbody>` +
+    list.map(n => `<tr class="node" data-k="${esc(nodeKey(n))}">
+      <td><span class="tag ${n.net}">${n.net.toUpperCase()}</span></td>
+      <td><b>${esc(n.name)}</b>${n.self ? " ⭐" : ""}</td>
+      <td>${esc(n.role || n.hw || "")}</td>
+      <td>${ago(n.last_heard)}</td>
+      <td class="num">${n.snr ?? ""}</td>
+      <td class="num">${n.hops ?? ""}</td>
+      <td>${n.lat != null ? "📍" : ""}</td></tr>`).join("") + `</tbody></table>`;
+  el.querySelectorAll("tr.node").forEach(tr => tr.onclick = () => {
+    const n = state.nodes.find(x => nodeKey(x) === tr.dataset.k);
+    if (markers[tr.dataset.k]) { map.setView(markers[tr.dataset.k].getLatLng(), 13); markers[tr.dataset.k].openPopup(); }
+    if (n && !n.self) pickTarget(n.net, n.id);
+  });
+}
+
+// ── messages tab ─────────────────────────────────
+function msgVisible(m) {
+  if (filter === "all") return true;
+  if (filter === "dm") return m.scope === "dm";
+  return m.net === filter;
+}
+function msgHtml(m) {
+  const out = m.direction === "out";
+  const failed = (m.status || "").startsWith("failed") || m.delivery === "failed";
+  const who = out ? (m.scope === "dm" ? "You → " + (m.peer_name || "") : "You") : (m.peer_name || "?");
+  const via = out && m.via ? `via ${m.via}` : "";
+  const sig = [m.snr != null ? `SNR ${m.snr}` : "", m.hops != null ? `${m.hops} hop${m.hops == 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
+  const canReply = !out && m.scope === "dm" && m.peer_id;
+  const icon = { delivered: "✅", repeated: "✅", relayed: "☑️", waiting: "⏳", sent: "📤", failed: "❌", unknown: "❔" }[m.delivery] || "";
+  const dlv = out && m.delivery ? `<div class="dlv ${esc(m.delivery)}">${icon} ${esc(m.delivery_info || m.delivery)}</div>` : "";
+  const route = !out && m.route ? `<div class="route">↪ via ${esc(m.route)}</div>` : "";
+  return `<div class="msg ${out ? "out" : ""} ${failed ? "failed" : ""} ${canReply ? "clickable" : ""}"
+      ${canReply ? `data-net="${m.net}" data-peer="${esc(m.peer_id)}" title="Click to reply privately"` : ""}>
+    <div class="meta"><span class="tag ${m.net}">${m.net.toUpperCase()}</span>
+      ${m.scope === "dm" ? `<span class="tag dm">PRIVATE</span>` : ""}
+      <span class="who">${esc(who)}</span><span>${clock(m.ts)}</span><span>${esc(sig)}</span><span>${esc(via)}</span></div>
+    <div class="body">${esc(m.text)}</div>
+    ${route}${dlv}
+  </div>`;
+}
+function drawMessages() {
+  const el = document.getElementById("messages");
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  const list = messages.filter(msgVisible);
+  el.innerHTML = list.length ? list.map(msgHtml).join("") : `<div class="empty">No messages yet</div>`;
+  el.querySelectorAll(".msg.clickable").forEach(d => d.onclick = () => pickTarget(d.dataset.net, d.dataset.peer));
+  if (atBottom || !drawMessages.done) el.scrollTop = el.scrollHeight;
+  drawMessages.done = true;
+}
+
+// ── send form ────────────────────────────────────
+const $net = document.getElementById("net"), $dest = document.getElementById("dest"), $text = document.getElementById("text");
+function fillDest(keep) {
+  const net = $net.value;
+  const cur = keep ?? $dest.value;
+  let opts = `<option value="">📢 Public channel</option>`;
+  if (net !== "all") {
+    const list = state.nodes.filter(n => n.net === net && !n.self && (net === "mt" || ["client", "room"].includes(n.role)))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    opts += list.map(n => `<option value="${esc(n.id)}">🔒 ${esc(n.name)}</option>`).join("");
+  }
+  $dest.innerHTML = opts;
+  $dest.value = [...$dest.options].some(o => o.value === cur) ? cur : "";
+  $dest.disabled = net === "all";
+  updateCount();
+}
+function updateCount() {
+  const net = $net.value;
+  const max = net === "all" ? Math.min(state.mt.max || 200, state.mc.max || 130) : (state[net].max || 200);
+  const n = bytes((state.sign || "") + $text.value);
+  document.getElementById("count").innerHTML = `<span class="${n > max ? "over" : ""}">${n}/${max} bytes${n > max ? " — will be cut" : ""}</span>`;
+  document.getElementById("sign-hint").textContent = state.sign ? `Sent as “${state.sign.trim()} …”` : "";
+}
+function pickTarget(net, id) {
+  $net.value = net;
+  fillDest(id);
+  map.closePopup();
+  $text.focus();
+}
+$net.onchange = () => fillDest();
+$text.oninput = updateCount;
+document.getElementById("send").onsubmit = async e => {
+  e.preventDefault();
+  const text = $text.value.trim();
+  if (!text) return;
+  const btn = document.getElementById("send-btn");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const r = await fetch("api/send", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ net: $net.value, dest: $dest.value || null, text }) });
+    if (!r.ok) throw new Error(await r.text());
+    const res = await r.json();
+    const bad = res.filter(x => !x.ok);   // radio not connected etc.; delivery shows up live in the list
+    if (bad.length) alert("Failed: " + bad.map(x => NET[x.net] + ": " + x.error).join("\n"));
+    else $text.value = "";
+  } catch (err) { alert("Send failed: " + err.message); }
+  btn.disabled = false; btn.textContent = "Send"; updateCount();
+};
+
+// ── tabs / filters ───────────────────────────────
+document.querySelectorAll(".tabs > button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs > button").forEach(x => x.classList.toggle("active", x === b));
+  document.getElementById("messages").hidden = b.dataset.tab !== "messages";
+  document.getElementById("nodes").hidden = b.dataset.tab !== "nodes";
+});
+document.querySelectorAll("#filters button").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll("#filters button").forEach(x => x.classList.toggle("active", x === b));
+  drawMessages(); drawNodes();
+});
+
+// ── data ─────────────────────────────────────────
+let firstState = true;
+function applyChrome() {
+  const $ = id => document.getElementById(id);
+  document.title = state.name || "Mesh Bridge";
+  $("title").textContent = "📡 " + (state.name || "Mesh Bridge");
+  $("mt-pill").hidden = !state.mt.enabled;
+  $("mc-pill").hidden = !state.mc.enabled;
+  $("tg-pill").hidden = state.telegram === "off";
+  $("tg-dot").classList.toggle("on", state.telegram === "on");
+  $("tg-label").textContent = "Telegram" + (state.telegram === "on" ? "" : " · " + state.telegram);
+  $("settings-link").hidden = !state.logged_in;
+  $("login-link").hidden = state.logged_in;
+  $("send").hidden = !state.logged_in;
+  $("readonly").hidden = state.logged_in;
+  $("setup-hint").hidden = !state.logged_in || state.mt.enabled || state.mc.enabled;
+  for (const o of $net.options) o.hidden = o.value === "all" ? !(state.mt.enabled && state.mc.enabled) : !state[o.value].enabled;
+  if ($net.selectedOptions[0]?.hidden) { const o = [...$net.options].find(x => !x.hidden); if (o) $net.value = o.value; }
+  if (firstState) {
+    firstState = false;
+    if (state.map && state.map.lat != null && state.map.lon != null) {
+      map.setView([state.map.lat, state.map.lon], state.map.zoom || 10);
+      fitted = true;   // user chose a start position, don't jump to the nodes
+    }
+  }
+}
+async function loadState() {
+  try {
+    const r = await fetch("api/state");
+    if (r.status === 401) { location.href = "login"; return; }
+    state = await r.json();
+    applyChrome();
+    document.getElementById("mt-dot").classList.toggle("on", state.mt.connected);
+    document.getElementById("mc-dot").classList.toggle("on", state.mc.connected);
+    const me = state.nodes.find(n => n.net === "mt" && n.self);
+    document.getElementById("mt-label").textContent = "Meshtastic" + (me ? " · " + me.name : "");
+    document.getElementById("mc-label").textContent = "MeshCore" + (state.mc.name ? " · " + state.mc.name : "");
+    document.getElementById("node-count").textContent = state.nodes.filter(n => !n.self).length + " nodes";
+    drawMap(); drawNodes(); fillDest($dest.value);
+  } catch (e) { console.error(e); }
+}
+async function loadMessages() {
+  messages = await (await fetch("api/messages")).json();
+  drawMessages();
+}
+function connectWs() {
+  const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + location.pathname.replace(/[^/]*$/, "") + "ws");
+  ws.onopen = () => { document.getElementById("ws-dot").classList.add("on"); loadMessages(); };
+  ws.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if (d.type === "msg" || d.type === "update") {
+      const i = messages.findIndex(x => x.id === d.msg.id);
+      if (i >= 0) messages[i] = d.msg; else messages.push(d.msg);
+      if (messages.length > 1000) messages.shift();
+      drawMessages();
+    }
+  };
+  ws.onclose = () => { document.getElementById("ws-dot").classList.remove("on"); setTimeout(connectWs, 3000); };
+}
+
+loadState();
+setInterval(loadState, 15000);
+setInterval(() => { drawMessages(); }, 60000);   // refresh "ago" labels
+connectWs();
+</script>
+</body>
+</html>

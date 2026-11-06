@@ -1,0 +1,19 @@
+services:
+  mesh-bridge:
+    build: .
+    container_name: mesh-bridge
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+      # USB radios: pass the whole by-id folder (or list single devices under "devices:")
+      - /dev/serial/by-id:/dev/serial/by-id
+    # needed so the container can open USB serial devices that appear after start
+    device_cgroup_rules:
+      - "c 166:* rmw"   # ttyACM*
+      - "c 188:* rmw"   # ttyUSB*
+    # Uncomment if you only use a USB radio and want simpler access:
+    # devices:
+    #   - /dev/ttyACM0
+    #   - /dev/ttyUSB0

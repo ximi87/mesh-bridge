@@ -1,0 +1,12 @@
+# runtime data: settings (contains the bot token), message history, setup code
+data/
+*.db
+*.env
+config.json
+setup-code.txt
+
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.bak*

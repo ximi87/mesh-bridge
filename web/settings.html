@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesh Bridge Settings</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="top">
+  <h1>⚙️ Settings</h1>
+  <span class="spacer"></span>
+  <a href="./">← Dashboard</a>
+  <button id="logout">Log out</button>
+</header>
+
+<div class="wrap">
+  <div id="loading" class="muted">Loading…</div>
+  <form id="f" hidden autocomplete="off">
+
+    <!-- ── General ── -->
+    <section class="card">
+      <h2>General</h2>
+      <p class="desc">How this bridge presents itself.</p>
+      <div class="grid2">
+        <div class="field">
+          <label for="general.name">Bridge name</label>
+          <input type="text" id="general.name" maxlength="60">
+          <div class="help">Shown in the page header and in Telegram status messages.</div>
+        </div>
+        <div class="field">
+          <label for="general.sign">Signature</label>
+          <input type="text" id="general.sign" maxlength="30" placeholder="e.g. Base: ">
+          <div class="help">Put in front of every message you send into the mesh. Leave empty for none.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="switch"><input type="checkbox" id="general.public_dashboard"> Public dashboard</label>
+        <div class="help">Anyone who can open this page sees the map and public messages without logging in.
+          Private messages and sending always need the password.</div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Map start position</label>
+          <div class="inline">
+            <input type="text" id="general.map_lat" placeholder="latitude">
+            <input type="text" id="general.map_lon" placeholder="longitude">
+          </div>
+          <div class="help">Empty = zoom to the nodes that have been heard.</div>
+        </div>
+        <div class="field">
+          <label for="general.map_zoom">Map zoom</label>
+          <input type="number" id="general.map_zoom" min="1" max="18">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Telegram ── -->
+    <section class="card">
+      <h2><span class="chip" style="background:var(--tg)"></span>Telegram</h2>
+      <p class="desc">Mesh messages are posted to one Telegram chat; people in that chat can reply into the mesh.</p>
+      <div class="field"><label class="switch"><input type="checkbox" id="telegram.enabled"> Enable Telegram</label></div>
+      <div data-group="telegram">
+        <div class="field">
+          <label for="telegram.token">Bot token</label>
+          <div class="inline">
+            <input type="password" id="telegram.token" placeholder="123456789:AA…">
+            <button type="button" id="tg-test">Test</button>
+          </div>
+          <div class="help">Create a bot by talking to <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>
+            in Telegram (<code>/newbot</code>) and paste the token it gives you. <span id="tg-test-result"></span></div>
+        </div>
+        <div class="note" id="tg-seen-box">
+          <b>Finding the chat id:</b> save with the token filled in, then send <code>/id</code> to your bot
+          (or add the bot to a group and send <code>/id</code> there). The chat appears below — click “Use”.
+          <div id="tg-seen"></div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="telegram.chat_id">Chat id</label>
+            <input type="text" id="telegram.chat_id" placeholder="e.g. 123456789 or -100…">
+            <div class="help">Your private chat with the bot, or a group (group ids start with −).</div>
+          </div>
+          <div class="field">
+            <label for="telegram.allowed_users">Allowed users</label>
+            <input type="text" id="telegram.allowed_users" placeholder="empty = everyone in the chat">
+            <div class="help">Telegram user ids allowed to send into the mesh, comma separated.</div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="switch"><input type="checkbox" id="telegram.forward_public"> Forward public channel messages</label>
+        </div>
+        <div class="field">
+          <label class="switch"><input type="checkbox" id="telegram.forward_private"> Forward private (direct) messages</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Meshtastic ── -->
+    <section class="card">
+      <h2><span class="chip" style="background:var(--mt)"></span>Meshtastic</h2>
+      <p class="desc">A Meshtastic radio reached over Wi-Fi/Ethernet (TCP port 4403) or a USB cable.</p>
+      <div class="field"><label class="switch"><input type="checkbox" id="meshtastic.enabled"> Enable Meshtastic</label></div>
+      <div data-group="meshtastic">
+        <div class="field">
+          <label>Connection</label>
+          <div class="seg">
+            <label><input type="radio" name="meshtastic.connection" value="tcp"><span>Network (TCP)</span></label>
+            <label><input type="radio" name="meshtastic.connection" value="serial"><span>USB serial</span></label>
+          </div>
+        </div>
+        <div class="field" data-show="meshtastic.connection=tcp">
+          <label for="meshtastic.host">Radio IP address or hostname</label>
+          <input type="text" id="meshtastic.host" placeholder="e.g. 192.168.1.50 or meshtastic.local">
+          <div class="help">Turn on Wi-Fi in the radio's Network settings; the bridge connects on port 4403.</div>
+        </div>
+        <div class="field" data-show="meshtastic.connection=serial">
+          <label for="meshtastic.serial_port">Serial port</label>
+          <div class="inline">
+            <select id="meshtastic.serial_port" data-ports></select>
+            <button type="button" data-refresh-ports>↻</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="meshtastic.channel">Channel index</label>
+          <input type="number" id="meshtastic.channel" min="0" max="7">
+          <div class="help">Which channel is bridged as “public”. 0 is the primary channel (LongFast).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MeshCore ── -->
+    <section class="card">
+      <h2><span class="chip" style="background:var(--mc)"></span>MeshCore</h2>
+      <p class="desc">A MeshCore <b>companion</b> radio (USB firmware, or Wi-Fi/TCP firmware). Repeater firmware cannot be used.</p>
+      <div class="field"><label class="switch"><input type="checkbox" id="meshcore.enabled"> Enable MeshCore</label></div>
+      <div data-group="meshcore">
+        <div class="field">
+          <label>Connection</label>
+          <div class="seg">
+            <label><input type="radio" name="meshcore.connection" value="serial"><span>USB serial</span></label>
+            <label><input type="radio" name="meshcore.connection" value="tcp"><span>Network (TCP)</span></label>
+          </div>
+        </div>
+        <div data-show="meshcore.connection=serial">
+          <div class="grid2">
+            <div class="field">
+              <label for="meshcore.serial_port">Serial port</label>
+              <div class="inline">
+                <select id="meshcore.serial_port" data-ports></select>
+                <button type="button" data-refresh-ports>↻</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="meshcore.baudrate">Baud rate</label>
+              <input type="number" id="meshcore.baudrate">
+            </div>
+          </div>
+          <div class="help" style="margin:-6px 0 14px">A USB port can only be used by one program at a time —
+            close the MeshCore web app / other tools on this computer.</div>
+        </div>
+        <div class="grid2" data-show="meshcore.connection=tcp">
+          <div class="field">
+            <label for="meshcore.host">Radio IP address</label>
+            <input type="text" id="meshcore.host">
+          </div>
+          <div class="field">
+            <label for="meshcore.tcp_port">TCP port</label>
+            <input type="number" id="meshcore.tcp_port">
+          </div>
+        </div>
+        <div class="field">
+          <label for="meshcore.channel">Channel index</label>
+          <input type="number" id="meshcore.channel" min="0" max="7">
+          <div class="help">0 = Public.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Password ── -->
+    <section class="card">
+      <h2>Admin password</h2>
+      <p class="desc">Changing it logs out every other browser.</p>
+      <div class="grid2">
+        <div class="field"><label for="pw-cur">Current password</label><input type="password" id="pw-cur" autocomplete="current-password"></div>
+        <div class="field"><label for="pw-new">New password</label><input type="password" id="pw-new" autocomplete="new-password" minlength="8"></div>
+      </div>
+      <div class="field"><button type="button" id="pw-btn">Change password</button> <span id="pw-msg"></span></div>
+    </section>
+
+    <p class="muted" style="font-size:12px">Settings are stored in <code id="data-dir"></code>/config.json.</p>
+  </form>
+</div>
+
+<div class="savebar" id="savebar" hidden>
+  <span class="msg" id="save-msg"></span>
+  <button type="button" id="restart">Restart bridge</button>
+  <button type="button" class="primary" id="save">Save &amp; apply</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let cfg = null, ports = [];
+
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: body ? { "Content-Type": "application/json" } : {},
+                               body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { location.href = "login"; throw new Error("login required"); }
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── form <-> config ──────────────────────────────
+function fill() {
+  for (const [sec, fields] of Object.entries(cfg)) {
+    for (const [key, val] of Object.entries(fields)) {
+      const id = sec + "." + key;
+      const radios = document.querySelectorAll(`input[name="${id}"]`);
+      if (radios.length) { radios.forEach(r => r.checked = r.value === val); continue; }
+      const el = $(id);
+      if (!el) continue;
+      if (el.type === "checkbox") el.checked = !!val;
+      else if (el.tagName === "SELECT") setPortOptions(el, val);
+      else el.value = Array.isArray(val) ? val.join(", ") : (val ?? "");
+    }
+  }
+  refreshVisibility();
+}
+function collect() {
+  const out = {};
+  for (const [sec, fields] of Object.entries(cfg)) {
+    out[sec] = {};
+    for (const key of Object.keys(fields)) {
+      const id = sec + "." + key;
+      const radio = document.querySelector(`input[name="${id}"]:checked`);
+      if (radio) { out[sec][key] = radio.value; continue; }
+      const el = $(id);
+      if (!el) continue;
+      out[sec][key] = el.type === "checkbox" ? el.checked : el.value;
+    }
+  }
+  return out;
+}
+function setPortOptions(sel, value) {
+  const list = ports.map(p => p.path);
+  if (value && !list.includes(value)) list.unshift(value);
+  sel.innerHTML = `<option value="">— pick a port —</option>` + list.map(path => {
+    const p = ports.find(x => x.path === path);
+    const label = p ? `${p.description || p.device} — ${p.device}` : `${path} (not plugged in)`;
+    return `<option value="${esc(path)}">${esc(label)}</option>`;
+  }).join("");
+  sel.value = value || "";
+}
+function refreshVisibility() {
+  for (const sec of ["telegram", "meshtastic", "meshcore"]) {
+    document.querySelector(`[data-group="${sec}"]`).classList.toggle("disabled-group", !$(sec + ".enabled").checked);
+  }
+  document.querySelectorAll("[data-show]").forEach(el => {
+    const [name, val] = el.dataset.show.split("=");
+    const cur = document.querySelector(`input[name="${name}"]:checked`);
+    el.hidden = !cur || cur.value !== val;
+  });
+}
+
+// ── telegram helpers ─────────────────────────────
+async function loadSeen() {
+  try {
+    const s = await api("GET", "api/telegram/seen");
+    const box = $("tg-seen");
+    let h = "";
+    if (s.error) h += `<p class="bad">Bot could not start: ${esc(s.error)}</p>`;
+    else if (!s.running && cfg.telegram.enabled) h += `<p class="muted">Bot is not running yet — save first.</p>`;
+    if (s.seen.length) {
+      h += `<table class="seen"><tr><th>Chat</th><th>From</th><th></th></tr>` + s.seen.map(c => `<tr>
+        <td>${esc(c.chat_title)} <span class="muted">(${esc(c.chat_type)}, ${c.chat_id})</span></td>
+        <td>${esc(c.user_name)} <span class="muted">${c.user_id ?? ""}</span></td>
+        <td><button type="button" data-chat="${c.chat_id}" data-user="${c.user_id ?? ""}">Use</button></td></tr>`).join("") + `</table>`;
+    } else if (s.running) h += `<p class="muted">Nobody has written to the bot since the last restart.</p>`;
+    box.innerHTML = h;
+    box.querySelectorAll("button[data-chat]").forEach(b => b.onclick = () => {
+      $("telegram.chat_id").value = b.dataset.chat;
+      const users = $("telegram.allowed_users").value.split(/[\s,]+/).filter(Boolean);
+      if (b.dataset.user && !users.includes(b.dataset.user)) users.push(b.dataset.user);
+      $("telegram.allowed_users").value = users.join(", ");
+      dirty();
+    });
+  } catch (e) { console.error(e); }
+}
+$("tg-test").onclick = async () => {
+  const out = $("tg-test-result");
+  out.className = "muted"; out.textContent = "testing…";
+  try {
+    const r = await api("POST", "api/telegram/test", { token: $("telegram.token").value });
+    out.className = "ok"; out.textContent = `✓ Works — bot @${r.username}`;
+  } catch (e) { out.className = "bad"; out.textContent = "✗ " + e.message; }
+};
+
+// ── save / restart ───────────────────────────────
+function dirty() { $("save-msg").textContent = "Unsaved changes"; $("save-msg").className = "msg muted"; }
+async function waitForRestart(msg) {
+  $("save-msg").className = "msg muted"; $("save-msg").textContent = msg;
+  await new Promise(r => setTimeout(r, 2500));
+  for (let i = 0; i < 30; i++) {
+    try { await api("GET", "api/config"); break; } catch (e) { await new Promise(r => setTimeout(r, 1000)); }
+  }
+  await load();
+  $("save-msg").className = "msg ok"; $("save-msg").textContent = "✓ Saved — bridge restarted with the new settings";
+}
+$("save").onclick = async () => {
+  $("save").disabled = true;
+  try {
+    await api("PUT", "api/config", collect());
+    await waitForRestart("Saved, restarting the bridge…");
+  } catch (e) { $("save-msg").className = "msg bad"; $("save-msg").textContent = e.message; }
+  $("save").disabled = false;
+};
+$("restart").onclick = async () => {
+  try { await api("POST", "api/restart"); await waitForRestart("Restarting…"); }
+  catch (e) { $("save-msg").className = "msg bad"; $("save-msg").textContent = e.message; }
+};
+$("pw-btn").onclick = async () => {
+  const m = $("pw-msg");
+  try {
+    await api("POST", "api/password", { current: $("pw-cur").value, new: $("pw-new").value });
+    m.className = "ok"; m.textContent = "✓ Password changed";
+    $("pw-cur").value = $("pw-new").value = "";
+  } catch (e) { m.className = "bad"; m.textContent = e.message; }
+};
+$("logout").onclick = async () => { await api("POST", "api/logout"); location.href = "login"; };
+document.querySelectorAll("[data-refresh-ports]").forEach(b => b.onclick = async () => {
+  ports = await api("GET", "api/serial-ports");
+  document.querySelectorAll("select[data-ports]").forEach(s => setPortOptions(s, s.value));
+});
+
+$("f").addEventListener("input", e => { if (!e.target.id.startsWith("pw-")) dirty(); refreshVisibility(); });
+$("f").addEventListener("change", refreshVisibility);
+$("f").onsubmit = e => e.preventDefault();
+
+async function load() {
+  const d = await api("GET", "api/config");
+  cfg = d.config; ports = d.serial_ports;
+  $("data-dir").textContent = d.data_dir;
+  fill();
+  $("loading").hidden = true; $("f").hidden = false; $("savebar").hidden = false;
+  loadSeen();
+}
+load().catch(e => { $("loading").textContent = "Could not load settings: " + e.message; });
+setInterval(() => { if (cfg && cfg.telegram.enabled) loadSeen(); }, 10000);
+</script>
+</body>
+</html>

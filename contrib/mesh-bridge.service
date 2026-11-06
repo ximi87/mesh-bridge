@@ -1,0 +1,22 @@
+# systemd *user* service. Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp contrib/mesh-bridge.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now mesh-bridge
+#   sudo loginctl enable-linger $USER      # keep running after you log out
+# Logs (the first-run setup code is printed here):
+#   journalctl --user -u mesh-bridge -f
+[Unit]
+Description=Mesh Bridge (Meshtastic/MeshCore <-> Telegram + web)
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/mesh-bridge
+Environment=DATA_DIR=%h/mesh-bridge/data
+Environment=WEB_PORT=8080
+ExecStart=%h/mesh-bridge/venv/bin/python -u bridge.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target
