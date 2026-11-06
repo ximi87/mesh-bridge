@@ -28,7 +28,7 @@ Works with one radio or with both. Telegram is optional too: without it the brid
 ### Option A: Python (Linux / Raspberry Pi)
 
 ```bash
-git clone https://github.com/<you>/mesh-bridge.git ~/mesh-bridge
+git clone https://github.com/ximi87/mesh-bridge.git ~/mesh-bridge
 cd ~/mesh-bridge
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
@@ -50,7 +50,7 @@ journalctl --user -u mesh-bridge -f        # logs
 ### Option B: Docker
 
 ```bash
-git clone https://github.com/<you>/mesh-bridge.git && cd mesh-bridge
+git clone https://github.com/ximi87/mesh-bridge.git && cd mesh-bridge
 docker compose up -d --build
 docker compose logs -f
 ```
