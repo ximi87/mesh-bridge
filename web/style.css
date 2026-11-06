@@ -10,6 +10,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 a { color: var(--accent); }
@@ -24,7 +25,7 @@ header.top .spacer { flex: 1; }
 .card > p.desc { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
 .field { margin-bottom: 14px; }
 .field > label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-.field .help { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.help { color: var(--muted); font-size: 12px; margin-top: 4px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 input[type=text], input[type=password], input[type=number], select {

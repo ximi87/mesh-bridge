@@ -11,6 +11,21 @@ Bridge **Meshtastic** and **MeshCore** LoRa mesh networks to **Telegram** and a 
 
 Works with one radio or with both. Telegram is optional too: without it the bridge is a web dashboard and messenger for your mesh.
 
+![Dashboard: live map of Meshtastic and MeshCore nodes, message history with delivery status](docs/screenshots/dashboard.png)
+
+<table>
+<tr>
+<td width="62%"><img src="docs/screenshots/settings.png" alt="Settings page: Telegram, Meshtastic and MeshCore set up in the browser"></td>
+<td width="38%"><img src="docs/screenshots/mobile.png" alt="Dashboard on a phone"></td>
+</tr>
+<tr>
+<td align="center"><sub>All setup happens on the Settings page</sub></td>
+<td align="center"><sub>Works on phones too</sub></td>
+</tr>
+</table>
+
+<sub>Screenshots use demo data.</sub>
+
 ## What you need
 
 | | |
