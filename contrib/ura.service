@@ -1,20 +1,20 @@
 # systemd *user* service. Install:
 #   mkdir -p ~/.config/systemd/user
-#   cp contrib/mesh-bridge.service ~/.config/systemd/user/
+#   cp contrib/ura.service ~/.config/systemd/user/
 #   systemctl --user daemon-reload
-#   systemctl --user enable --now mesh-bridge
+#   systemctl --user enable --now ura
 #   sudo loginctl enable-linger $USER      # keep running after you log out
 # Logs (the first-run setup code is printed here):
-#   journalctl --user -u mesh-bridge -f
+#   journalctl --user -u ura -f
 [Unit]
-Description=Mesh Bridge (Meshtastic/MeshCore <-> Telegram + web)
+Description=Ura (Meshtastic/MeshCore <-> Telegram + web)
 After=network-online.target
 
 [Service]
-WorkingDirectory=%h/mesh-bridge
-Environment=DATA_DIR=%h/mesh-bridge/data
+WorkingDirectory=%h/ura
+Environment=DATA_DIR=%h/ura/data
 Environment=WEB_PORT=8080
-ExecStart=%h/mesh-bridge/venv/bin/python -u bridge.py
+ExecStart=%h/ura/venv/bin/python -u bridge.py
 Restart=always
 RestartSec=15
 

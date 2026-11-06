@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mesh Bridge — Meshtastic + MeshCore <-> Telegram + web dashboard.
+"""Ura (Albanian for "bridge") — Meshtastic + MeshCore <-> Telegram + web dashboard.
 
 Public-channel and private (direct) messages from a Meshtastic radio (TCP or
 USB serial) and a MeshCore companion radio (USB serial or TCP) are stored in

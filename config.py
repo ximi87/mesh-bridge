@@ -20,7 +20,7 @@ WEB_PORT = int(os.environ.get("WEB_PORT", "8080"))
 
 DEFAULTS = {
     "general": {
-        "name": "Mesh Bridge",          # shown in the page header and Telegram status lines
+        "name": "Ura",          # shown in the page header and Telegram status lines
         "sign": "",                     # prefix on every outgoing mesh message, e.g. "Base: "
         "public_dashboard": False,      # True: map + messages readable without login (sending still needs login)
         "map_lat": None,                # map start position; empty = fit to the nodes heard

@@ -1,7 +1,7 @@
 services:
-  mesh-bridge:
+  ura:
     build: .
-    container_name: mesh-bridge
+    container_name: ura
     restart: unless-stopped
     ports:
       - "8080:8080"

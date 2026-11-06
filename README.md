@@ -1,6 +1,8 @@
-# 📡 Mesh Bridge
+# 📡 Ura
 
-Bridge **Meshtastic** and **MeshCore** LoRa mesh networks to **Telegram** and a **web dashboard**.
+*Every mesh, one world.*
+
+**Ura** (Albanian for *bridge*) connects **Meshtastic** and **MeshCore** LoRa mesh networks to **Telegram** and a **web dashboard**.
 
 - Messages on the mesh public channel and private (direct) messages show up in a Telegram chat.
 - Reply in Telegram and the answer goes back into the mesh. A reply to a private message stays private.
@@ -43,8 +45,8 @@ Works with one radio or with both. Telegram is optional too: without it the brid
 ### Option A: Python (Linux / Raspberry Pi)
 
 ```bash
-git clone https://github.com/ximi87/mesh-bridge.git ~/mesh-bridge
-cd ~/mesh-bridge
+git clone https://github.com/ximi87/ura.git ~/ura
+cd ~/ura
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 sudo usermod -aG dialout $USER     # access to USB radios; log out and back in once
@@ -55,17 +57,17 @@ To start it automatically at boot, use the included systemd service:
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp contrib/mesh-bridge.service ~/.config/systemd/user/
+cp contrib/ura.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now mesh-bridge
+systemctl --user enable --now ura
 sudo loginctl enable-linger $USER          # keep running when you are logged out
-journalctl --user -u mesh-bridge -f        # logs
+journalctl --user -u ura -f        # logs
 ```
 
 ### Option B: Docker
 
 ```bash
-git clone https://github.com/ximi87/mesh-bridge.git && cd mesh-bridge
+git clone https://github.com/ximi87/ura.git && cd ura
 docker compose up -d --build
 docker compose logs -f
 ```
