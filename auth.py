@@ -5,7 +5,7 @@ import hmac
 import secrets
 import time
 
-COOKIE = "ura_session"
+COOKIE = "mb_session"
 SESSION_DAYS = 30
 
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ura</title>
+<title>Mesh Bridge</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root {
@@ -94,7 +94,7 @@
 </head>
 <body>
 <header>
-  <h1 id="title">📡 Ura</h1>
+  <h1 id="title">📡 Mesh Bridge</h1>
   <span class="pill" id="mt-pill" hidden><span class="dot" id="mt-dot"></span><span id="mt-label">Meshtastic</span></span>
   <span class="pill" id="mc-pill" hidden><span class="dot" id="mc-dot"></span><span id="mc-label">MeshCore</span></span>
   <span class="pill" id="tg-pill" hidden><span class="dot" id="tg-dot"></span><span id="tg-label">Telegram</span></span>
@@ -342,8 +342,8 @@ document.querySelectorAll("#filters button").forEach(b => b.onclick = () => {
 let firstState = true;
 function applyChrome() {
   const $ = id => document.getElementById(id);
-  document.title = state.name || "Ura";
-  $("title").textContent = "📡 " + (state.name || "Ura");
+  document.title = state.name || "Mesh Bridge";
+  $("title").textContent = "📡 " + (state.name || "Mesh Bridge");
   $("mt-pill").hidden = !state.mt.enabled;
   $("mc-pill").hidden = !state.mc.enabled;
   $("tg-pill").hidden = state.telegram === "off";
